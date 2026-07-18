@@ -1,5 +1,10 @@
-// Projects section improvements
 document.addEventListener('DOMContentLoaded', () => {
+    setupProjectsSection();
+    setupContactForm();
+});
+
+// Projects section improvements
+function setupProjectsSection() {
     const projectsGrid = document.querySelector('.projects-grid');
     if (projectsGrid) {
         // Add navigation buttons
@@ -51,7 +56,66 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
     }
-});
+}
+
+function setupContactForm() {
+    const form = document.getElementById('contactForm');
+    if (!form) {
+        return;
+    }
+
+    const status = document.getElementById('contactStatus');
+    const submitButton = form.querySelector('button[type="submit"]');
+    const defaultButtonText = submitButton.textContent;
+
+    form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        setContactStatus(status, '', '');
+        submitButton.disabled = true;
+        submitButton.textContent = 'Sending...';
+
+        const payload = {
+            name: form.name.value.trim(),
+            email: form.email.value.trim(),
+            subject: form.subject.value.trim(),
+            message: form.message.value.trim()
+        };
+
+        try {
+            const response = await fetch('/api/contact', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || 'Unable to send your message.');
+            }
+
+            form.reset();
+            setContactStatus(status, 'success', 'Thanks! Your message has been saved.');
+        } catch (error) {
+            setContactStatus(status, 'error', error.message || 'Something went wrong. Please try again.');
+        } finally {
+            submitButton.disabled = false;
+            submitButton.textContent = defaultButtonText;
+        }
+    });
+}
+
+function setContactStatus(statusElement, type, message) {
+    if (!statusElement) {
+        return;
+    }
+
+    statusElement.className = type ? `form-status ${type}` : 'form-status';
+    statusElement.textContent = message;
+}
 
 // Create modal for project details
 function openProjectModal(projectCard) {
@@ -97,3 +161,5 @@ function openProjectModal(projectCard) {
         if (event.target === modal) {
             modal.style.display = 'none';
         }
+    });
+}
